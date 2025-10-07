@@ -143,4 +143,4 @@ The Socket.IO server listens for and emits the following events:
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` file for more information.
+Distributed under the MIT License.
