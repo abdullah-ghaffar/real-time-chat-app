@@ -61,7 +61,7 @@ Make sure you have the following installed on your machine:
 
 1.  **Clone the repository**
     ```sh
-    git clone [https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git](https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git)
+    git clone [https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git](https://github.com/abdullah-ghaffar/real-time-chat-app.git)
     ```
 2.  **Navigate to the project directory**
     ```sh
