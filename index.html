@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        #auth-container, #chat-container, #start-chat-container { display: none; }
+        #auth-container.active, #chat-container.active, #start-chat-container.active { display: block; }
+        input { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; }
+        button { padding: 10px 15px; border: none; background-color: #007bff; color: white; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        #messages { height: 300px; border: 1px solid #ddd; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        .message { margin-bottom: 5px; }
+        .message strong { color: #007bff; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>My Chat App</h1>
+
+        <div id="auth-container" class="active">
+            <h2>Login or Signup</h2>
+            <input type="text" id="username-input" placeholder="Username">
+            <input type="password" id="password-input" placeholder="Password">
+            <button onclick="login()">Login</button>
+            <button onclick="signup()">Signup</button>
+        </div>
+
+        <div id="start-chat-container">
+            <h2 id="welcome-message"></h2>
+            <input type="number" id="recipient-id-input" placeholder="Enter User ID to chat with">
+            <button onclick="startConversation()">Start Chat</button>
+        </div>
+
+        <div id="chat-container">
+            <h3 id="chat-with-message"></h3>
+            <div id="messages"></div>
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        let token = null;
+        let currentConversationId = null;
+        let socket = null;
+        let currentUsername = '';
+
+        const authContainer = document.getElementById('auth-container');
+        const startChatContainer = document.getElementById('start-chat-container');
+        const chatContainer = document.getElementById('chat-container');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const recipientIdInput = document.getElementById('recipient-id-input');
+        const chatWithMessage = document.getElementById('chat-with-message');
+
+        // --- API FUNCTIONS ---
+        async function signup() {
+            const username = document.getElementById('username-input').value;
+            const password = document.getElementById('password-input').value;
+            const response = await fetch(`${API_URL}/auth/signup`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await response.json();
+            alert(data.message || data.error);
+        }
+
+        async function login() {
+            const username = document.getElementById('username-input').value;
+            const password = document.getElementById('password-input').value;
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await response.json();
+            if (data.token) {
+                token = data.token;
+                currentUsername = username;
+                localStorage.setItem('chat_token', token);
+                localStorage.setItem('chat_username', username);
+                showStartChatView();
+            } else {
+                alert(data.error);
+            }
+        }
+
+        async function startConversation() {
+            const recipientId = recipientIdInput.value;
+            if (!recipientId) return alert('Please enter a User ID.');
+            const response = await fetch(`${API_URL}/api/conversations`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ recipientId })
+            });
+            const data = await response.json();
+            if (data.conversationId) {
+                currentConversationId = data.conversationId;
+                showChatView(recipientId);
+            } else {
+                alert(data.error);
+            }
+        }
+
+        async function getMessages() {
+            if (!token || !currentConversationId) return;
+            const response = await fetch(`${API_URL}/api/conversations/${currentConversationId}/messages`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const messages = await response.json();
+            messagesDiv.innerHTML = '';
+            messages.forEach(msg => appendMessage(msg));
+        }
+        
+        async function sendMessage() {
+            const messageText = messageInput.value;
+            if (!messageText.trim() || !token || !currentConversationId) return;
+            await fetch(`${API_URL}/api/messages`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ conversationId: currentConversationId, messageText })
+            });
+            messageInput.value = '';
+        }
+
+        // --- VIEW & UI FUNCTIONS ---
+        function showStartChatView() {
+            authContainer.style.display = 'none';
+            startChatContainer.style.display = 'block';
+            chatContainer.style.display = 'none';
+            welcomeMessage.innerText = `Welcome, ${currentUsername}!`;
+        }
+
+        function showChatView(recipientId) {
+            startChatContainer.style.display = 'none';
+            chatContainer.style.display = 'block';
+            chatWithMessage.innerText = `Chatting with User ID: ${recipientId}`;
+            getMessages();
+            connectWebSocket();
+        }
+
+        function appendMessage(msg) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.innerHTML = `<strong>${msg.sender_username}:</strong> ${msg.message_text}`;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // --- REAL-TIME LOGIC ---
+        function connectWebSocket() {
+            if (socket) socket.disconnect();
+            socket = io(API_URL);
+            socket.on('connect', () => {
+                socket.emit('join_conversation', currentConversationId);
+            });
+            socket.on('receive_message', (message) => {
+                if(message.conversation_id === currentConversationId) {
+                    appendMessage(message);
+                }
+            });
+        }
+        
+        // Check if user was already logged in
+        const savedToken = localStorage.getItem('chat_token');
+        const savedUsername = localStorage.getItem('chat_username');
+        if(savedToken && savedUsername) {
+            token = savedToken;
+            currentUsername = savedUsername;
+            showStartChatView();
+        }
+
+    </script>
+</body>
+</html>
