@@ -59,25 +59,44 @@ Make sure you have the following installed on your machine:
 
 ### Installation
 
-1.  **Clone the repository**
+1.  **Create a Parent Folder:**
+    First, create a parent folder anywhere on your computer where you want to store the project, and open your terminal inside that folder.
     ```sh
-    git clone https://github.com/abdullah-ghaffar/real-time-chat-app.git
+    # Windows Example:
+    C:\Users\YourName> mkdir my-workspace
+    C:\Users\YourName> cd my-workspace
     ```
-2.  **Navigate to the project directory**
+    You are now inside the `my-workspace` folder.
+
+2.  **Clone the Repository:**
+    Inside this parent folder, clone the project from GitHub. This will create a new folder called `real-time-chat-app`.
     ```sh
-    cd YOUR_REPOSITORY_NAME
+    # You are now in C:\Users\YourName\my-workspace
+    git clone [https://github.com/abdullah-ghaffar/real-time-chat-app.git](https://github.com/abdullah-ghaffar/real-time-chat-app.git)
     ```
-3.  **Install NPM packages**
+
+3.  **Go Inside the Project Folder (Most Important Step):**
+    You now need to move into the new folder that `git clone` created. All future commands will be run from inside this folder.
     ```sh
+    # You are now in C:\Users\YourName\my-workspace
+    cd real-time-chat-app
+    ```
+    Your terminal prompt should now look something like `C:\Users\YourName\my-workspace\real-time-chat-app>`.
+
+4.  **Install NPM Packages:**
+    Inside this project folder, run the `npm install` command. It will read the `package.json` file and install the necessary packages into a `node_modules` folder.
+    ```sh
+    # You are now in C:\Users\YourName\my-workspace\real-time-chat-app
     npm install
     ```
-4.  **Set up the Database**
-    * Create a new PostgreSQL database (e.g., `chat_app_db`).
-    * Run the SQL scripts to create the `users`, `conversations`, `participants`, and `messages` tables.
 
-5.  **Configure Environment Variables**
-    * Create a `.env` file in the root directory.
-    * Copy the contents of `.env.example` (or the structure below) into it and fill in your details:
+5.  **Set up the Database:**
+    * Create a new, empty database in PostgreSQL (e.g., `chat_app_db`).
+    * Run the SQL queries (provided in the project documentation) to create the `users`, `conversations`, `participants`, and `messages` tables within that database.
+
+6.  **Set up Environment Variables (`.env` file):**
+    * Inside the project folder (`real-time-chat-app`), create a new file named `.env`.
+    * Copy the details below into that file and fill in your actual database credentials:
         ```env
         DB_USER=your_database_user
         DB_HOST=localhost
@@ -86,11 +105,14 @@ Make sure you have the following installed on your machine:
         DB_PORT=5432
         JWT_SECRET=your_super_secret_random_string
         ```
-6.  **Run the Server**
+
+7.  **Run the Server:**
+    Finally, start the server from inside the project folder.
     ```sh
+    # You are now in C:\Users\YourName\my-workspace\real-time-chat-app
     node server.js
     ```
-    The server will start on `http://localhost:3000`.
+    Your server will start running on `http://localhost:3000`.
 
 ---
 
