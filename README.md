@@ -72,7 +72,7 @@ Make sure you have the following installed on your machine:
     Inside this parent folder, clone the project from GitHub. This will create a new folder called `real-time-chat-app`.
     ```sh
     # You are now in C:\Users\YourName\my-workspace
-    git clone [https://github.com/abdullah-ghaffar/real-time-chat-app.git](https://github.com/abdullah-ghaffar/real-time-chat-app.git)
+    git clone https://github.com/abdullah-ghaffar/real-time-chat-app.git
     ```
 
 3.  **Go Inside the Project Folder (Most Important Step):**
